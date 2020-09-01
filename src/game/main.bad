@@ -1,0 +1,581 @@
+## ------------------------------------'
+##               MAIN                  '
+## ------------------------------------'
+
+
+
+OPEN"grp:"AS#1: defint a-z
+## 41=Inhibits the screen display, 44=Displays the screen
+## http://map.grauw.nl/resources/msxbios.php
+DEFUSR1=&H41:DEFUSR2=&H44
+
+
+
+## INICIALIZAMOS MANAGERS
+##      Inicializamos las entidades
+gosub {init_entities}
+##      Inicializamos el mapa'
+gosub {inicializar_mapa}
+##      Llamamos a la función cargar array con data'
+gosub {guardar_mapa_en_array}
+##      Incializamos sistema de render
+gosub {init_render}
+##      Inicializamos sistema de input
+gosub {init_input_system}
+##      Inicializamos sistema de físicas 
+
+##      Inicializamos sistema de colisiones
+
+
+
+
+
+## ACTUALIZANDO SISTEMAS
+{main_loop}
+## actualizando el render'
+gosub {update_render}
+## actualizando el input
+gosub {update_input_system2}
+## actualizando las fisicas
+## actualizando las colisiones
+goto {main_loop}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## ------------------------------------'
+##               Render system         '
+## ------------------------------------'
+{init_render}
+    ## screen 5,2
+    gosub {render_map}
+    gosub {render_entities}
+return
+{update_render}
+    ## Si ha cambiado el mapa lo pintamos
+    if mc then gosub {render_map}
+    gosub {render_entities}
+return
+
+## 
+## Dibujar entidad personaje
+## Esta funcion actualizará el personaje en pantalla
+## 
+{render_entities}
+    put sprite ps,(px,py),,pp
+return
+
+
+## 
+## Dibujar mapa
+## Esta funcion dibujará los tiles con el array
+## 
+{render_map}
+    ## Inhabilitamos el display screen
+    ## a=usr1(0)
+    cls:mc=0:preset (0,0):print #1, "Cargando level "ms
+    for f=0 to 12
+            for c=0 to 15
+                tn=m(f,c,ms)  
+            ## 'Para referenciar cada tile en el tileset (lo que hemos pegado en la page 1)
+            ## 'cogeremos su número de tile tn y cada 16 tiles será otra fila, lo pegaremos en la columna c, fila f'
+                if tn >=0 and tn <=15 then copy (tn*16,0*16)-((tn*16)+16,(0*16)+16),1 to (c*16,f*16)
+                if tn >15 and tn <=31 then copy ((tn-16)*16,1*16)-(((tn-16)*16)+16,(1*16)+16),1 to (c*16,f*16)
+                if tn >31 and tn <=47 then copy ((tn-32)*16,2*16)-(((tn-32)*16)+16,(2*16)+16),1 to (c*16,f*16)
+                if tn>47 and tn <=63 then copy ((tn-48)*16,3*16)-(((tn-48)*16)+16,(3*16)+16),1 to (c*16,f*16)
+                if tn>63 and tn <=79 then copy ((tn-64)*16,4*16)-(((tn-64)*16)+16,(4*16)+16),1 to (c*16,f*16)
+                if tn>79 and tn <=95 then copy ((tn-80)*16,5*16)-(((tn-80)*16)+16,(5*16)+16),1 to (c*16,f*16)
+                if tn>95 and tn <=111 then copy ((tn-96)*16,6*16)-(((tn-96)*16)+16,(6*16)+16),1 to (c*16,f*16)
+                if tn>111 and tn <=127 then copy ((tn-112)*16,7*16)-(((tn-112)*16)+16,(7*16)+16),1 to (c*16,f*16)
+                if tn>127 and tn <=143 then copy ((tn-128)*16,8*16)-(((tn-128)*16)+16,(8*16)+16),1 to (c*16,f*16)
+                if tn>143 and tn <=159 then copy ((tn-144)*16,9*16)-(((tn-144)*16)+16,(9*16)+16),1 to (c*16,f*16)
+                if tn>159 and tn <=175 then copy ((tn-160)*16,10*16)-(((tn-160)*16)+16,(10*16)+16),1 to (c*16,f*16)
+                if tn>175 and tn <=191 then copy ((tn-176)*16,11*16)-(((tn-176)*16)+16,(11*16)+16),1 to (c*16,f*16)
+                if tn>191 and tn <=207 then copy ((tn-192)*16,12*16)-(((tn-192)*16)+16,(12*16)+16),1 to (c*16,f*16)
+                ## print #1, "tn es un "tn;
+            next c
+            
+
+    next f
+    ## Habilitamos el display screen
+    ## a=usr2(0)
+    preset (0,0):print #1, "Level "ms"           "
+return
+
+
+
+
+
+
+## ------------------------------------'
+##               Input system         '
+## ------------------------------------'
+
+
+
+{init_input_system}
+    ## con 0 habilitamos las interrupciones para capturar las pulsaciones del espacio y cirsores
+    strig(0) on
+    on strig gosub {rutina_disparo}
+return
+## 
+## 'Subrutina captura movimiento joystick / cursores y boton de disparo'
+## 
+## ' stick(0) devuelve el cursor pulsado: 1 Arriba, 2 arriba derecha, 3 derecha, 4 abajo derecha, 5 abajo, 6 abajo izquierda, 7 izquierda, 8 izquierda arriba
+{update_input_system}
+    on stick(0) gosub {Mover_arriba},{@},{Mover_derecha},{@},{Mover_abajo},{@},{Mover_izquierda}
+return
+{update_input_system2}
+    ## '1 Arriba, 2 arriba derecha, 3 derecha, 4 abajo derecha, 5 abajo, 6 abajo izquierda, 7 izquierda, 8 izquierda arriba
+     j=stick(0)
+     if j=3 then  gosub {Mover_derecha}
+     if j=7 then  gosub {Mover_izquierda}
+     if j=1 then  gosub {Mover_arriba}
+     if j=5 then  gosub {Mover_abajo} 
+return
+
+##  'pd=dirección arriba ^ 1, derecha > 3, abajo v 5, izquierda < 7
+{Mover_derecha}
+    px=px+pv
+    ## ' Le ponemos como plano el 0'
+    pp=1
+    gosub {colision_system_screen}
+return
+{Mover_izquierda}
+    px=px-pv
+    pp=3
+    ## if px<0 then px=0
+    ## preset(0,0): print #1, "pulsates izquierda"
+    gosub {colision_system_screen}
+return
+{Mover_arriba}
+    py=py-pv
+    ## con pu le decimos que está saltando, al tocas la tierra volveremos a poner pu=0'
+    ## if pu<>1 then py=py-35
+    pp=7
+    ## pc=pc+1
+    ## com esto evitamos que el player salga de la pantalla'
+    ## if py<=30 then py=30
+    ## if py>200 then py=200
+    ## preset(0,0): print #1, "pulsates arriba"
+    gosub {colision_system_screen}
+return
+{Mover_abajo}
+    py=py+pv
+    pp=5
+    ## nada
+    ## preset(0,0): print #1, "pulsates abajo"
+    gosub {colision_system_screen}
+return
+
+
+
+
+
+
+## ------------------------------------'
+##               Colision system       '
+## ------------------------------------'
+
+
+{colision_system_screen}
+    ## Si la posición en x del player es mayor que el ancho de la pantalla la dejamos en esa posición para que no salga de la pantalla'
+    if px>=255-pw or px<0 or py<0 or py> 212-ph then px=0:ms=ms+1:mc=1: put sprite ps,(0,-32),,pp
+    if ms>=mm-1 then ms=0
+return
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## ------------------------------------------------------------------------------------------'
+##                          MANAGERS
+## ------------------------------------------------------------------------------------------'
+
+## ------------------------------------'
+##               Entidad-player       '
+## ------------------------------------'
+{init_entities}
+    px=100: py=212-16-16-16: pw=16: ph=16: pd=3: pu=0: pv=10: pe=100: pc=0: pp=1: ps=1
+return
+
+## ------------------------------------'
+##               Entidad-disparo       '
+## ------------------------------------'
+{rutina_disparo}
+    ##nada
+return
+
+
+
+## ------------------------------'
+##             Mapas             '
+## ------------------------------'
+
+
+## neceswitamos decirle a nuestro juego don de hay una pared: una casa: etc'
+## Como son 256x212px y heos dibujado cuadros de 16 por 16px necesitamos un mapa
+##' de 13 filas y 16 columnas recordemos que la posición 1 tambien s cuenta en un array'
+## inicializamos el mapa'
+
+{inicializar_mapa}
+    ## ms=mapa seleccioando, lo hiremos cambiando
+    ## mm= maximo de mapas, como hemos creado 2 levels ponemos mm=mapa maximo 2
+    ##mc= mapa cambia, lo utilizaremos para cambiar los copys y así cambiar la pantalla
+    ms=0:mm=5:mc=0:tn=-1
+    ## 13 serán la fila y 16 laas columnas menos uno, porque así son los arrays'
+    dim m(12,15,mm-1)
+return
+
+
+## funcion guardar los tiles que hemos guardado como data en un array
+## ahora leemos las filas f'
+{guardar_mapa_en_array}
+    ## 1 leemos los levels
+    for i=0 to mm-1
+        ## ahora leemos las filas o la posición x
+        for f=0 to 12
+        ## ahora leemos las columnas c o la posicion y
+            for c=0 to 15
+                read a$ 
+                m(f,c,i)=VAL(a$)
+            next c
+        next f
+    next i
+return
+
+{leer_valores_array}
+    for i=0 to mm-1
+        for f=0 to 12
+        ## ahora leemos las columnas c
+            for c=0 to 15
+                print #1, m(f,c,ms);
+            next c
+            print #1,""
+        next f
+        print #1,"mapa: "ms
+    next i
+return
+
+{leer_tile}
+    if tn >=0 and tn <=15 then copy (tn*16,0*16)-((tn*16)+16,(0*16)+16),1 to (co*16,fi*16)
+return
+
+
+
+
+
+
+
+## Los mapas estámn hechos con el programa tiled, incluido en el proyecto'
+## En el mapa de tiles el:
+##     0 es un arbol' 
+## LEVELS'
+
+
+## level 1
+data 0,0,0,0,0,0,0,0,135,9,10,0,0,0,0,0
+data 0,144,145,145,145,146,145,147,135,25,26,0,0,0,0,0
+data 0,160,1,0,0,0,1,163,135,0,0,0,197,198,190,191
+data 0,160,1,188,189,0,1,163,135,0,0,0,204,205,206,207
+data 0,160,1,204,205,0,1,163,135,0,0,0,0,135,0,0
+data 0,160,1,0,52,0,1,163,135,0,0,0,0,135,9,10
+data 0,160,1,0,52,0,3,163,135,0,0,0,0,135,25,26
+data 0,176,177,177,177,178,177,179,151,152,152,152,152,151,152,152
+data 0,0,0,0,0,135,0,0,135,17,202,203,17,17,17,17
+data 0,0,9,10,0,135,0,0,135,17,205,206,0,0,0,0
+data 0,0,25,26,0,135,0,0,135,17,0,135,17,17,17,17
+data 152,152,152,152,152,151,152,152,151,152,152,151,152,152,152,152
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+## level 2
+data 0,0,0,0,0,33,0,135,0,0,0,192,193,194,0,0
+data 33,0,0,0,0,0,0,135,0,0,0,192,193,194,0,0
+data 0,0,0,96,97,98,0,135,0,0,0,192,193,194,0,0
+data 0,0,0,112,113,114,0,135,0,0,0,192,181,194,0,0
+data 0,0,0,128,129,130,0,135,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,135,0,33,0,0,67,0,0,0
+data 150,150,150,150,150,150,150,151,152,152,152,152,152,152,152,152
+data 0,0,0,0,0,0,0,167,33,0,0,0,0,2,2,2
+data 0,99,100,101,0,0,0,135,0,0,99,100,101,2,2,2
+data 0,115,116,117,0,0,0,135,0,33,115,116,117,0,2,2
+data 0,131,132,133,0,0,0,135,0,0,131,132,133,0,2,2
+data 0,0,0,33,0,0,0,135,0,0,0,0,0,0,2,2
+data 0,0,0,0,0,0,0,135,0,0,0,33,0,0,2,2
+## level 3
+data 17,0,0,33,0,0,0,0,33,0,0,0,0,0,0,17
+data 17,33,33,0,0,33,33,0,0,0,0,0,0,0,33,17
+data 33,180,180,180,180,180,180,180,180,180,180,180,180,0,0,17
+data 17,180,126,126,126,126,88,89,126,67,126,79,180,0,33,17
+data 17,180,126,126,126,126,104,105,126,71,72,73,180,0,0,17
+data 33,180,126,126,86,126,126,56,126,126,56,126,180,0,0,17
+data 17,180,126,126,102,126,126,56,39,40,56,87,180,17,17,17
+data 17,180,180,126,126,126,126,126,126,56,126,103,180,17,33,0
+data 33,17,180,180,180,180,180,180,180,56,180,180,180,17,33,0
+data 0,17,17,17,17,17,17,17,180,119,180,17,17,17,0,0
+data 0,141,142,143,0,0,0,0,17,135,17,141,142,143,0,0
+data 152,152,152,152,152,152,152,152,152,151,152,152,152,152,152,152
+data 0,0,0,0,0,0,0,0,0,167,0,0,0,0,0,0
+## level 4
+data 0,135,0,0,9,10,0,1,0,0,9,10,0,0,0,0
+data 0,135,16,0,25,26,1,0,16,0,25,26,0,0,11,0
+data 0,135,0,16,0,1,0,0,16,0,0,0,0,27,0,0
+data 0,151,152,152,152,152,152,152,152,152,152,151,152,152,152,152
+data 0,0,0,16,0,50,0,16,0,0,0,135,50,0,0,0
+data 0,9,10,16,0,0,0,9,10,0,0,135,0,9,10,0
+data 0,25,26,16,1,0,0,25,26,0,0,135,0,25,26,0
+data 0,0,0,0,0,0,0,0,0,11,0,135,0,0,0,0
+data 0,16,16,0,27,0,0,0,1,0,0,135,0,50,0,0
+data 152,152,152,152,152,152,152,152,152,152,152,151,152,152,152,152
+data 0,9,10,0,0,0,0,0,0,9,10,0,0,0,0,16
+data 0,25,26,0,16,0,0,50,0,25,26,0,0,0,16,0
+data 0,0,0,0,0,0,16,0,0,0,0,0,0,11,16,0
+## level 5
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+## level 6
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+## level 7
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+## level 8
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+## level 9
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+## level 10
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+## level 11
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+## level 12
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+## level 13
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+## level 14
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+## level 15
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+## level 16
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
