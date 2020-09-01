@@ -32,7 +32,7 @@
 1 ' Cargamos nuestros sprites'
 2000 bload"sprites.bin",r: print #1,"Load sprites":close #1
 
-
+2100 bload"xbasic.bin",r
 1 ' Cargamos el main'
 3000 load "main.bas",r
 

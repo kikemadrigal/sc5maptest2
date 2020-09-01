@@ -101,6 +101,7 @@ return
     ## Inhabilitamos el display screen
     ## a=usr1(0)
     cls:mc=0:preset (0,0):print #1, "Cargando level "ms
+    _TURBO ON (tn,m(),ms)
     for f=0 to 12
             for c=0 to 15
                 tn=m(f,c,ms)  
@@ -121,9 +122,8 @@ return
                 if tn>191 and tn <=207 then copy ((tn-192)*16,12*16)-(((tn-192)*16)+16,(12*16)+16),1 to (c*16,f*16)
                 ## print #1, "tn es un "tn;
             next c
-            
-
     next f
+     _TURBO off
     ## Habilitamos el display screen
     ## a=usr2(0)
     preset (0,0):print #1, "Level "ms"           "
