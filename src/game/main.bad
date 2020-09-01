@@ -99,7 +99,7 @@ return
 ## 
 {render_map}
     ## Inhabilitamos el display screen
-    ## a=usr1(0)
+    a=usr1(0)
     cls:mc=0:preset (0,0):print #1, "Cargando level "ms
     _TURBO ON (tn,m(),ms)
     for f=0 to 12
@@ -125,7 +125,7 @@ return
     next f
      _TURBO off
     ## Habilitamos el display screen
-    ## a=usr2(0)
+    a=usr2(0)
     preset (0,0):print #1, "Level "ms"           "
 return
 
@@ -351,7 +351,7 @@ return
 
 ## Los mapas estámn hechos con el programa tiled, incluido en el proyecto'
 ## En el mapa de tiles el:
-##     0 es un arbol' 
+##     
 ## LEVELS'
 
 
